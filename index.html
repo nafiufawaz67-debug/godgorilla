@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>God Gorilla</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0d0620;--card:#1d1140;--card2:#2a1a5e;--gold:#ffc928;--gold2:#fff2a8;--text:#f4f0ff;--muted:#a99ad6;--green:#3ddc84}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto}
+main{flex:1;overflow-y:auto;padding:14px 16px 8px}
+.screen{display:none}
+.screen.active{display:block}
+#tap.active{display:flex;flex-direction:column;align-items:center;min-height:100%}
+h2{margin:6px 0 4px;font-size:22px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.top{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted)}
+.bal{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-size:42px;font-weight:900;color:var(--gold2)}
+.bal span.ic{font-size:34px}
+.league{width:100%;background:var(--card);border-radius:14px;padding:10px 12px}
+.lrow{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.lrow b{color:var(--gold)}
+.bar{height:8px;background:#0d0620;border-radius:6px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9d00,#ffe36b);border-radius:6px;transition:width .2s}
+#coinwrap{flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:12px 0}
+#coin{width:min(72vw,300px);height:min(72vw,300px);border-radius:50%;border:6px solid var(--gold);background:radial-gradient(circle at 50% 40%,#5a2bb5,#1a0b3d 70%);box-shadow:0 0 40px rgba(255,201,40,.45),inset 0 0 30px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;touch-action:none;transition:transform .08s;position:relative}
+#coin svg{width:88%;height:88%;pointer-events:none}
+.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.fl{position:fixed;font-weight:900;font-size:26px;color:var(--gold2);pointer-events:none;text-shadow:0 2px 6px #000;animation:up .8s ease-out forwards;z-index:20}
+@keyframes up{to{transform:translateY(-90px);opacity:0}}
+.energy{width:100%;padding:4px 0 6px}
+.energy .lrow{font-size:15px}
+.card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.card .ic{font-size:28px}
+.card .tx{flex:1}
+.card .tx b{display:block;font-size:15px}
+.card .tx small{color:var(--muted);font-size:12px}
+button{font:inherit;border:0;border-radius:10px;padding:9px 14px;font-weight:700;color:#2a1500;background:linear-gradient(#ffe36b,#ffb300);cursor:pointer}
+button:disabled{background:#3a2d66;color:#8d80b8}
+button.sec{background:var(--card2);color:var(--text)}
+nav{display:flex;background:var(--card);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;color:var(--muted);font-size:12px;padding:8px 0;border-radius:10px}
+nav button.on{background:var(--card2);color:var(--gold2)}
+nav button span{display:block;font-size:20px}
+.link{background:#0d0620;border-radius:10px;padding:10px;font-size:12px;word-break:break-all;color:var(--gold2);margin:8px 0;-webkit-user-select:text;user-select:text}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000c;padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:30;max-width:85%;text-align:center}
+#toast.show{opacity:1}
+.note{font-size:12px;color:var(--muted);margin-top:12px}
+</style>
+</head>
+<body>
+<div id="app">
+<main>
+  <section id="tap" class="screen active">
+    <div class="top"><span id="uname">Gorilla</span><span>🏆 <b id="league">Baby Gorilla</b></span></div>
+        <div class="bal"><span class="ic">🪙</span><span id="bal">0</span></div>
+    <div class="league">
+      <div class="lrow"><span>League progress</span><b id="lnext"></b></div>
+      <div class="bar"><i id="lp"></i></div>
+    </div>
+    <div id="coinwrap">
+      <div id="coin">
+        <svg viewBox="140 100 360 400" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".5" stop-color="#ffc928"/><stop offset="1" stop-color="#b9780a"/></linearGradient>
+            <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34343f"/><stop offset="1" stop-color="#1b1b23"/></linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <circle cx="186" cy="352" r="24" fill="#22222a"/><circle cx="454" cy="352" r="24" fill="#22222a"/>
+          <ellipse cx="320" cy="340" rx="138" ry="142" fill="url(#fur)"/>
+          <ellipse cx="320" cy="222" rx="72" ry="52" fill="#1d1d25"/>
+          <ellipse cx="320" cy="365" rx="104" ry="104" fill="#43434f"/>
+          <path d="M215 318 Q320 276 425 318 L425 336 Q320 308 215 336 Z" fill="#14141a"/>
+          <g filter="url(#glow)"><ellipse cx="277" cy="334" rx="17" ry="12" fill="#ffd84a"/><ellipse cx="363" cy="334" rx="17" ry="12" fill="#ffd84a"/></g>
+          <circle cx="277" cy="334" r="6" fill="#2a1500"/><circle cx="363" cy="334" r="6" fill="#2a1500"/>
+          <ellipse cx="320" cy="410" rx="76" ry="60" fill="#5c5c68"/>
+          <ellipse cx="298" cy="392" rx="8" ry="11" fill="#14141a"/><ellipse cx="342" cy="392" rx="8" ry="11" fill="#14141a"/>
+          <path d="M278 432 Q320 458 362 432" fill="none" stroke="#14141a" stroke-width="6" stroke-linecap="round"/>
+          <path d="M296 440 L302 456 L308 443 Z M344 440 L338 456 L332 443 Z" fill="#f4f0e6"/>
+          <ellipse cx="320" cy="150" rx="110" ry="26" fill="none" stroke="url(#gold)" stroke-width="14" filter="url(#glow)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="energy">
+      <div class="lrow"><span>⚡ Energy</span><b id="en">0 / 0</b></div>
+      <div class="bar"><i id="ef"></i></div>
+    </div>
+  </section>
+
+  <section id="boost" class="screen">
+    <h2>⚡ Boosts</h2><p class="sub">Spend coins to tap harder and longer.</p>
+    <div id="boostList"></div>
+  </section>
+
+  <section id="tasks" class="screen">
+    <h2>✅ Tasks</h2><p class="sub">Complete tasks to earn bonus coins.</p>
+    <div id="taskList"></div>
+  </section>
+
+  <section id="friends" class="screen">
+    <h2>👥 Friends</h2><p class="sub">Invite friends and grow the gorilla tribe.</p>
+    <div class="card" style="display:block">
+      <b>Your invite link</b>
+      <div class="link" id="reflink"></div>
+            <div style="display:flex;gap:8px"><button id="copyBtn">Copy link</button><button class="sec" id="shareBtn">Invite friends</button></div>
+    </div>
+    <p class="note">Referral bonuses are counted once the game server is connected.</p>
+  </section>
+</main>
+<nav>
+  <button data-s="tap" class="on"><span>🦍</span>Tap</button>
+  <button data-s="boost"><span>⚡</span>Boost</button>
+  <button data-s="tasks"><span>✅</span>Tasks</button>
+  <button data-s="friends"><span>👥</span>Friends</button>
+</nav>
+</div>
+<div id="toast"></div>
+
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor('#0d0620'); tg.setBackgroundColor('#0d0620'); } catch (e) {} }
+const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || { id: 'guest', first_name: 'Gorilla' };
+const BOT = 'God_Gorilla_bot';
+const KEY = 'godGorilla_v1_' + user.id;
+const LEAGUES = [[0,'Baby Gorilla'],[5000,'Young Ape'],[25000,'Silverback'],[100000,'Golden Silverback'],[500000,'Gorilla King'],[2000000,'God Gorilla']];
+const TASKS = [
+  { id: 'channel', title: 'Join our Telegram channel', reward: 5000, url: 'https://t.me/YOUR_CHANNEL' },
+  { id: 'x', title: 'Follow us on X', reward: 5000, url: 'https://x.com/YOUR_HANDLE' }
+];
+const $ = id => document.getElementById(id);
+const fmt = n => Math.floor(n).toLocaleString('en-US');
+const dayStr = (off = 0) => new Date(Date.now() + off * 864e5).toISOString().slice(0, 10);
+let S;
+
+const maxE = () => 500 + S.elvl * 500;
+const regen = () => S.rlvl;
+const cost = l => 1000 * Math.pow(2, l - 1);
+
+function load() {
+  try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+  S = Object.assign({ coins: 0, total: 0, energy: 1000, ts: Date.now(), multi: 1, elvl: 1, rlvl: 1, full: 3, fullDay: dayStr(), done: {}, opened: {}, ci: { day: '', streak: 0 } }, S || {});
+  S.energy = Math.min(maxE(), S.energy + Math.max(0, (Date.now() - S.ts) / 1000) * regen());
+  dailyReset();
+}
+function save() { S.ts = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function dailyReset() { if (S.fullDay !== dayStr()) { S.fullDay = dayStr(); S.full = 3; } }
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2000); }
+
+function leagueIdx() { let i = 0; for (let k = 0; k < LEAGUES.length; k++) if (S.total >= LEAGUES[k][0]) i = k; return i; }
+function renderHud() {
+  const i = leagueIdx(), nx = LEAGUES[i + 1];
+  $('bal').textContent = fmt(S.coins);
+  $('league').textContent = LEAGUES[i][1];
+  $('lnext').textContent = nx ? fmt(S.total) + ' / ' + fmt(nx[0]) : 'MAX';
+  $('lp').style.width = (nx ? Math.min(100, (S.total - LEAGUES[i][0]) / (nx[0] - LEAGUES[i][0]) * 100) : 100) + '%';
+  $('en').textContent = Math.floor(S.energy) + ' / ' + maxE();
+  $('ef').style.width = (S.energy / maxE() * 100) + '%';
+}
+
+function renderBoost() {
+  dailyReset();
+    const items = [
+    { ic: '👆', name: 'Multitap', desc: '+1 coin per tap', lvl: S.multi, max: 10, key: 'multi' },
+    { ic: '🔋', name: 'Energy limit', desc: '+500 max energy', lvl: S.elvl, max: 10, key: 'elvl' },
+    { ic: '⚡', name: 'Recharge speed', desc: '+1 energy per second', lvl: S.rlvl, max: 5, key: 'rlvl' }
+  ];
+  let h = `<div class="card"><div class="ic">🚀</div><div class="tx"><b>Full energy</b><small>${S.full}/3 available today</small></div><button id="fullBtn" ${S.full < 1 ? 'disabled' : ''}>Use</button></div>`;
+  items.forEach(it => {
+    const c = cost(it.lvl), maxed = it.lvl >= it.max;
+    h += `<div class="card"><div class="ic">${it.ic}</div><div class="tx"><b>${it.name} · Lv ${it.lvl}</b><small>${it.desc}${maxed ? '' : ' · 🪙 ' + fmt(c)}</small></div><button data-up="${it.key}" ${maxed ? 'disabled' : ''}>${maxed ? 'MAX' : 'Buy'}</button></div>`;
+  });
+  $('boostList').innerHTML = h;
+  const fb = $('fullBtn');
+  if (fb) fb.onclick = () => { if (S.full > 0) { S.full--; S.energy = maxE(); save(); renderHud(); renderBoost(); toast('Energy refilled!'); } };
+  document.querySelectorAll('[data-up]').forEach(b => b.onclick = () => {
+    const it = items.find(x => x.key === b.dataset.up), c = cost(it.lvl);
+    if (S.coins < c) return toast('Not enough coins');
+    S.coins -= c; S[it.key]++; save(); renderHud(); renderBoost(); toast(it.name + ' upgraded!');
+  });
+}
+
+function openUrl(u) {
+  if (tg && /^https:\/\/t\.me\//.test(u)) tg.openTelegramLink(u);
+  else if (tg) tg.openLink(u);
+  else window.open(u, '_blank');
+}
+function renderTasks() {
+  const ciDone = S.ci.day === dayStr();
+  const streak = ciDone ? S.ci.streak : (S.ci.day === dayStr(-1) ? S.ci.streak + 1 : 1);
+  const reward = 500 * Math.min(streak, 10);
+  let h = `<div class="card"><div class="ic">📅</div><div class="tx"><b>Daily check-in</b><small>🪙 ${fmt(reward)} · streak ${ciDone ? S.ci.streak : streak}</small></div><button id="ciBtn" ${ciDone ? 'disabled' : ''}>${ciDone ? 'Done ✓' : 'Claim'}</button></div>`;
+  TASKS.forEach(t => {
+    const done = S.done[t.id];
+    h += `<div class="card"><div class="ic">⭐</div><div class="tx"><b>${t.title}</b><small>🪙 ${fmt(t.reward)}</small></div><button data-t="${t.id}" ${done ? 'disabled' : ''}>${done ? 'Done ✓' : (S.opened[t.id] ? 'Claim' : 'Go')}</button></div>`;
+  });
+  $('taskList').innerHTML = h;
+  const cb = $('ciBtn');
+  if (cb) cb.onclick = () => { S.ci = { day: dayStr(), streak }; S.coins += reward; S.total += reward; save(); renderHud(); renderTasks(); toast('+' + fmt(reward) + ' coins'); };
+  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
+    const t = TASKS.find(x => x.id === b.dataset.t);
+    if (!S.opened[t.id]) { S.opened[t.id] = Date.now(); save(); openUrl(t.url); renderTasks(); return; }
+    if (Date.now() - S.opened[t.id] < 5000) return toast('Complete the task first');
+        S.done[t.id] = true; S.coins += t.reward; S.total += t.reward; save(); renderHud(); renderTasks(); toast('+' + fmt(t.reward) + ' coins');
+  });
+}
+
+function renderFriends() {
+  const link = 'https://t.me/' + BOT + '?start=ref_' + user.id;
+  $('reflink').textContent = link;
+  $('copyBtn').onclick = () => {
+    if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => toast('Link copied'), () => toast(link));
+    else toast(link);
+  };
+  $('shareBtn').onclick = () => {
+    const u = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Tap with me in God Gorilla 🦍👑 and earn $GGOD!');
+    if (tg) tg.openTelegramLink(u); else window.open(u, '_blank');
+  };
+}
+
+// Tapping (multi-touch supported: each finger fires its own pointerdown)
+const coin = $('coin');
+coin.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  const v = S.multi;
+  if (S.energy < v) { coin.classList.remove('shake'); void coin.offsetWidth; coin.classList.add('shake'); return; }
+  S.energy -= v; S.coins += v; S.total += v;
+  const r = coin.getBoundingClientRect();
+  const dx = (e.clientX - r.left) / r.width - .5, dy = (e.clientY - r.top) / r.height - .5;
+  coin.style.transform = `perspective(500px) rotateX(${-dy * 18}deg) rotateY(${dx * 18}deg) scale(.96)`;
+  const f = document.createElement('div');
+  f.className = 'fl'; f.textContent = '+' + v; f.style.left = (e.clientX - 12) + 'px'; f.style.top = (e.clientY - 30) + 'px';
+  document.body.appendChild(f); setTimeout(() => f.remove(), 800);
+  if (tg && tg.HapticFeedback) { try { tg.HapticFeedback.impactOccurred('light'); } catch (_) {} }
+  renderHud();
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => coin.addEventListener(ev, () => { coin.style.transform = ''; }));
+coin.addEventListener('contextmenu', e => e.preventDefault());
+
+// Navigation
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === b.dataset.s));
+  if (b.dataset.s === 'boost') renderBoost();
+  if (b.dataset.s === 'tasks') renderTasks();
+  if (b.dataset.s === 'friends') renderFriends();
+});
+
+load();
+$('uname').textContent = user.first_name || 'Gorilla';
+renderHud();
+setInterval(() => { if (S.energy < maxE()) { S.energy = Math.min(maxE(), S.energy + regen()); renderHud(); } }, 1000);
+setInterval(save, 3000);
+document.addEventListener('visibilitychange', save);
+window.addEventListener('pagehide', save);
+</script>
+</body>
+</html>
